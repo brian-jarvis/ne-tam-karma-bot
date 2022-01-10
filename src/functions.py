@@ -318,8 +318,12 @@ def get_users_in_channel(channel, s, clean_nics = False):
 
   logging.debug('\r\n Starting to get names from channel ' + channel)
   s.send(irc_fmt("NAMES " + channel + "\n"))
-  while True:
-    read_buffer += s.recv(2048).decode()
+  rv = ''
+  while not rv is None:
+    rv = recv_timeout(s, 4096, 10)
+    if not rv is None:
+      read_buffer = rv.decode()
+
     lines = read_buffer.split('\r\n')
     read_buffer = lines.pop()  ## This line seems useless?
     for line in lines:
