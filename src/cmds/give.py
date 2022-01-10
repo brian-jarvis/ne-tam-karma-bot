@@ -16,15 +16,14 @@ def give(socket, components):
   cleansed_sender = components['sender'].split('|')[0].strip('_').strip('@').strip('-')
   user_list.remove(cleansed_sender)
 
-  ## Open a new socket to the management channel
   if len(user_list) > 0:
     try:
+      ## Open a new socket to the management channel
       ksock = create_socket()
       if ksock and connect_to((config.server, config.port), ksock):
-        content = 'Connected to {0}:{1}'.format(config.server, config.port)
-        logging.info(content)
+        logging.info('Connected to {0}:{1} for karma'.format(config.server, config.port))
         
-        knick = config.current_nick + '-' + cleansed_sender + '-' + components['action_args'][0][1:]
+        knick = cleansed_sender + '-' + components['action_args'][0][1:] + '-' + config.current_nick 
         name_bot(ksock, [knick], config.real_name)
 
         ## join the management channel
@@ -33,9 +32,16 @@ def give(socket, components):
         time.sleep(2)
         ## send the message to the new channel
         send_to= 'PRIVMSG ' + config.management_channel + ' :'
-        send_response(give_users_karma(user_list), send_to, ksock)
+        send_response(give_users_karma(user_list) + '\n', send_to, ksock)
+
+        rv = ''
+        while not rv is None:
+          rv = recv_timeout(ksock, 4096, 5)
+          if not rv is None:
+            ms = rv.decode()
+            logging.debug("KSOCK: " + ms + \
+                ('' if '\n' == ms[len(ms)-1] else '\n'))
     finally:
-      time.sleep(2)
       quit_bot(ksock)
       ksock.close()
     

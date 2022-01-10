@@ -4,6 +4,7 @@ import datetime
 import socket
 import threading
 import os
+import select
 import logging
 import fnmatch
 from database import Database
@@ -299,6 +300,15 @@ def send_response(response, destination, s):
       logging.debug('BotRsp:: ' + response)
       return True
   return None
+
+  
+def recv_timeout(sock, bytes_to_read, timeout_seconds):
+  """ Wait for specified time for the socket to recieve message"""
+  sock.setblocking(0)
+  ready = select.select([sock], [], [], timeout_seconds)
+  if ready[0]:
+      return sock.recv(bytes_to_read)
+  else: return None
 
 def get_users_in_channel(channel, s, clean_nics = False):
   RPL_NAMREPLY   = '353'
