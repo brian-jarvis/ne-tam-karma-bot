@@ -1,0 +1,6 @@
+
+CREATE TABLE IF NOT EXISTS channel_membership (
+  dt_join TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  channel_nm TEXT NOT NULL UNIQUE,
+  is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1))
+);

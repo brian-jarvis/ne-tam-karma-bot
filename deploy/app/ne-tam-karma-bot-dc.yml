@@ -1,0 +1,61 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: ne-tam-karma-bot
+  namespace: ne-tam-tools--runtime-int
+parameters:
+- name: IMAGE_TAG
+  description: Image Tag
+  displayName: Image Tag
+  required: true
+objects:
+- kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: tam-tools-karmabot
+    namespace: ne-tam-tools--runtime-int
+    labels:
+      app: tam-tools-karmabot
+      paas.redhat.com/appcode: TAMT-001
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: tam-tools-karmabot
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: tam-tools-karmabot
+          deploymentconfig: tam-tools-karmabot
+          paas.redhat.com/appcode: TAMT-001
+      spec:
+        containers:
+          - name: karmabot
+            image: images.paas.redhat.com/ne-tam-tools/tam-tools-karmabot:${IMAGE_TAG}
+            resources: 
+              limits:
+                cpu: "250m"
+                memory: "368Mi"
+              requests:
+                cpu: "100m"
+                memory: "256Mi"
+            imagePullPolicy: Always
+            volumeMounts:
+              - name: app-config
+                mountPath: /opt/KarmaBot/config.py
+                subPath: config.py
+              - name: sqlite-data
+                mountPath: '/opt/sqlite/ne-tam-bot'
+        volumes:
+          - name: app-config
+            configMap:
+              name: "karmabot-config"
+          - name: sqlite-data
+            persistentVolumeClaim:
+              claimName: tam-tools-karmabot
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+    strategy:
+      type: Recreate
+     

@@ -1,0 +1,19 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: ne-tam-karma-bot-el
+  namespace: ne-tam-tools--pipeline
+spec:
+  namespaceSelector: {}
+  podTemplate: {}
+  resources: {}
+  serviceAccountName: pipeline
+  triggers:
+    - bindings:
+        - kind: ClusterTriggerBinding
+          ref: gitlab-push
+      interceptors:
+        - cel:
+            filter: body.repository.git_http_url.contains('ne-tam-karma-bot')
+      template:
+        ref: ne-tam-karma-bot-tt

@@ -1,0 +1,41 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: ne-tam-karma-bot-tt
+  namespace: ne-tam-tools--pipeline
+spec:
+  params:
+    - description: Source code commit hash
+      name: checkout-sha
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        annotations: {}
+        generateName: karmabot-
+        labels:
+          tekton.dev/pipeline: tam-tools-karmabot-pipeline
+        namespace: ne-tam-tools--pipeline
+      spec:
+        params:
+          - name: IMAGE_TAG
+            value: $(tt.params.checkout-sha)
+        pipelineRef:
+          name: tam-tools-karmabot-pipeline
+        status: null
+        workspaces:
+          - name: shared-workspace
+            volumeClaimTemplate:
+              metadata:
+                annotations:
+                  kubernetes.io/reclaimPolicy: Delete
+                labels:
+                  paas.redhat.com/appcode: TAMT-001
+                name: ws-pvc
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+                storageClassName: aws-efs-tier-c3

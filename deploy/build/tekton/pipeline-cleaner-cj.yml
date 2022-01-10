@@ -1,0 +1,26 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: pipeline-cleaner-cj
+  namespace: ne-tam-tools--pipeline
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccount: pipeline
+          containers:
+            - name: ocli
+              image: images.paas.redhat.com/itpaas-blessed-images/openshift4-ose-cli
+              env:
+                - name: NUM_TO_KEEP
+                  value: "2"
+              command:
+                - /bin/bash
+                - -c
+                - |
+                    TO_DELETE="$(oc get pipelinerun -n ne-tam-tools--pipeline  -o jsonpath='{range .items[?(@.status.completionTime)]}{.status.completionTime}{" "}{.metadata.name}{"\n"}{end}' | sort | head -n -${NUM_TO_KEEP} | awk '{ print $2}')"
+                    test -n "$TO_DELETE" && oc delete pipelinerun -n ne-tam-tools--pipeline ${TO_DELETE} || true

@@ -1,0 +1,26 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: ne-tam-karma-bot-pvc
+  namespace: ne-tam-tools--runtime-int
+objects:
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    annotations:
+      AppCode: TAMT-001
+      kubernetes.io/reclaimPolicy: Delete
+    name: tam-tools-karmabot
+    namespace: ne-tam-tools--runtime-int
+    labels:
+      paas.redhat.com/appcode: TAMT-001
+  spec:
+    accessModes:
+      # - ReadWriteMany
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
+    # storageClassName: aws-efs-tier-c3
+    storageClassName: gp2
+    volumeMode: Filesystem

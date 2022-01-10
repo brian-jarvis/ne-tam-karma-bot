@@ -1,0 +1,134 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tam-tools-karmabot-pipeline
+  namespace: ne-tam-tools--pipeline
+spec:
+  params:
+    - default: latest
+      name: IMAGE_TAG
+      type: string
+  tasks:
+    - name: clone-repo
+      params:
+        - name: url
+          value: 'https://gitlab.cee.redhat.com/bjarvis/ne-tam-karma-bot.git'
+        - name: submodules
+          value: 'false'
+        - name: depth
+          value: '1'
+        - name: sslVerify
+          value: 'false'
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: gitInitImage
+          value: >-
+            registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8:v1.6.1
+        - name: revision
+          value: $(params.IMAGE_TAG)
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: buildah
+      params:
+        - name: IMAGE
+          value: >-
+            images.paas.redhat.com/ne-tam-tools/tam-tools-karmabot:$(context.pipelineRun.name)
+        - name: BUILDER_IMAGE
+          value: >-
+            registry.redhat.io/rhel8/buildah:8.5
+        - name: STORAGE_DRIVER
+          value: vfs
+        - name: DOCKERFILE
+          value: ./Containerfile
+        - name: CONTEXT
+          value: ./src
+        - name: TLSVERIFY
+          value: 'true'
+        - name: FORMAT
+          value: oci
+      runAfter:
+        - clone-repo
+      taskRef:
+        kind: ClusterTask
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: deploy-appconfig
+      runAfter:
+        - buildah
+      taskRef:
+        kind: ClusterTask
+        name: openshift-process
+      params:
+        - name: cluster-id
+          value: preprod-spoke-aws-us-east-1
+        - name: pipeline-name
+          value: tam-tools-karmabot
+        - name: template-file-path
+          value: deploy/app/ne-tam-karma-bot-cm.yml
+        - name: apply-args
+          value: '-n ne-tam-tools--runtime-int'
+        - name: process-args
+          value: '-p LOG_LEVEL=INFO'
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: deploy-persistentvolumeclaim
+      runAfter:
+        - buildah
+      taskRef:
+        kind: ClusterTask
+        name: openshift-process
+      params:
+        - name: cluster-id
+          value: preprod-spoke-aws-us-east-1
+        - name: pipeline-name
+          value: tam-tools-karmabot
+        - name: template-file-path
+          value: deploy/app/ne-tam-karma-bot-pvc.yml
+        - name: apply-args
+          value: '-n ne-tam-tools--runtime-int'
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: deploy-karmabot
+      runAfter:
+        - deploy-appconfig
+        - deploy-persistentvolumeclaim
+      taskRef:
+        kind: ClusterTask
+        name: openshift-deploy2
+      params:
+        - name: cluster-id
+          value: preprod-spoke-aws-us-east-1
+        - name: pipeline-name
+          value: tam-tools-karmabot
+        - name: template-file-path
+          value: deploy/app/ne-tam-karma-bot-dc.yml
+        - name: process-args
+          value: '-p IMAGE_TAG=$(context.pipelineRun.name)'
+        - name: deployment-kind
+          value: deployment
+        - name: deployment-name
+          value: tam-tools-karmabot
+        - name: deployment-namespace
+          value: ne-tam-tools--runtime-int
+        - name: timeout
+          value: 4m
+        - name: apply-args
+          value: '-n ne-tam-tools--runtime-int'
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+  workspaces:
+    - name: shared-workspace
