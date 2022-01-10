@@ -11,6 +11,20 @@ import err
 from functions import *
 import channel_manager
 
+## below breaks and crashs
+# "                .88888888:."
+# 2022-01-10 21:37:51 - DEBUG - ALL: :stampy!~stampy@10.44.130.145 PRIVMSG #gcs-na-northeast :                .88888888:.
+
+# Traceback (most recent call last):
+#   File "/opt/KarmaBot/ircbot.py", line 183, in <module>
+#     main()
+#   File "/opt/KarmaBot/ircbot.py", line 175, in main
+#     run(socket, channel_list, config.cmds, config.current_nick)
+#   File "/opt/KarmaBot/ircbot.py", line 62, in run
+#     is_cmd_prefix = ('!' == frst_arg[0])
+# IndexError: string index out of range
+
+
 def run(socket, channels, cmds, nick):
   # buffer for some command received
   buff = ''
@@ -48,7 +62,7 @@ def run(socket, channels, cmds, nick):
             response.append(':' + components['arguments'])
 
           elif 'PRIVMSG' == components['action']:
-            frst_arg = components['arguments'].split(' ')[0].lower()
+            frst_arg = components['arguments'].strip().split(' ')[0].lower()
 
             ## we will accept either !<Command> as the first arg
             ## or our name followed by the command. EGG: you can also use tambot
