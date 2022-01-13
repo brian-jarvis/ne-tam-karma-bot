@@ -9,7 +9,7 @@ owner = list(set([
 
 
 # server to connect to
-server = 'irc.lab.bos.redhat.com'
+server = 'irc.devel.redhat.com'
 # server's port
 port = 6667
 
