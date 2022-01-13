@@ -56,6 +56,11 @@ def run(socket, channels, cmds, nick):
           components = parser.parse_command(command)
           to = send_to(command)
 
+          ## check if the message is from another bot.
+          sender_is_bot = any(list(filter(lambda bot: fnmatch.fnmatch(components['sender'].lower(), bot), config.known_bots)))
+          if sender_is_bot:
+            continue
+
           if 'PING' == components['action']:
             response = []
             response.append('PONG')
@@ -75,7 +80,6 @@ def run(socket, channels, cmds, nick):
                             )
             is_cmd_prefix = ('!' == frst_arg[0])
 
-            sender_is_bot = any(list(filter(lambda bot: fnmatch.fnmatch(components['sender'].lower(), bot), config.known_bots)))
             if (is_cmd_prefix or is_bot_prefix) and (not sender_is_bot):
 
               logging.debug(receive + \
