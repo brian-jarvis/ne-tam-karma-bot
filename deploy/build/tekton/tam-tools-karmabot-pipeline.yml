@@ -77,7 +77,7 @@ spec:
         - name: apply-args
           value: '-n ne-tam-tools--runtime-int'
         - name: process-args
-          value: '-p LOG_LEVEL=INFO'
+          value: '-p LOG_LEVEL=DEBUG'
       workspaces:
         - name: source
           workspace: shared-workspace

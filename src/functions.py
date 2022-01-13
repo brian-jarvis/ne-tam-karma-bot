@@ -4,6 +4,7 @@ import datetime
 import socket
 import threading
 import os
+import select
 import logging
 import fnmatch
 from database import Database
@@ -300,6 +301,15 @@ def send_response(response, destination, s):
       return True
   return None
 
+  
+def recv_timeout(sock, bytes_to_read, timeout_seconds):
+  """ Wait for specified time for the socket to recieve message"""
+  sock.setblocking(0)
+  ready = select.select([sock], [], [], timeout_seconds)
+  if ready[0]:
+      return sock.recv(bytes_to_read)
+  else: return None
+
 def get_users_in_channel(channel, s, clean_nics = False):
   RPL_NAMREPLY   = '353'
   RPL_ENDOFNAMES = '366'
@@ -308,8 +318,12 @@ def get_users_in_channel(channel, s, clean_nics = False):
 
   logging.debug('\r\n Starting to get names from channel ' + channel)
   s.send(irc_fmt("NAMES " + channel + "\n"))
-  while True:
-    read_buffer += s.recv(2048).decode()
+  rv = ''
+  while not rv is None:
+    rv = recv_timeout(s, 4096, 10)
+    if not rv is None:
+      read_buffer = rv.decode()
+
     lines = read_buffer.split('\r\n')
     read_buffer = lines.pop()  ## This line seems useless?
     for line in lines:
