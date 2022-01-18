@@ -1,4 +1,5 @@
 from __future__ import print_function
+from hashlib import new
 import sys
 import re
 
@@ -10,15 +11,16 @@ __name__ = 'cowsay'
 
 char_names = CHARS.keys()
 
-
-def wrap_lines(lines, max_width=49):
+def wrap_lines(lines, max_width=80):
     # TODO: Wrap a line only at whitespaces
+    import textwrap
     new_lines = []
     for line in lines:
-        for line_part in [
-            line[i:i+max_width] for i in range(0, len(line), max_width)
-        ]:
-            new_lines.append(line_part)
+      new_lines += textwrap.wrap(line, width=80)
+        # for line_part in [
+        #     line[i:i+max_width] for i in range(0, len(line), max_width)
+        # ]:
+        #     new_lines.append(line_part)
     return new_lines
 
 
