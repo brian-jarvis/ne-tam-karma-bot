@@ -2,7 +2,7 @@ FROM registry.redhat.io/ubi8/ubi-minimal:8.5
 
 LABEL org.opencontainers.image.authors="bry@redhat.com"
 
-RUN microdnf  install  python39 python39-six python39-requests && microdnf clean all
+RUN microdnf  install  python39 python39-six python39-requests  && microdnf clean all && pip3 install dateutils
 
 LABEL version="8.5"
 LABEL summary="A containerized IRC Bot for Ne TAMs."

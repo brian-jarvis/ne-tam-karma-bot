@@ -37,118 +37,116 @@ def run(socket, channels, cmds, nick):
   with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executor:
     while len(channels):
       # receive = socket.recv(4096).decode()
-      rv = recv_timeout(socket, 4096, 10)
+      rv = recv_timeout(socket, 2048, 10)
       if not rv is None:
         receive = rv.decode()
 
-        buff = buff + receive
-        response = ''
+        lines = receive.split('\r\n')
+        for buff in lines:
+          response = ''
 
-        logging.debug("ALL: " + receive + \
-                ('' if '\n' == receive[len(receive)-1] else '\n'))
+          if buff != '':
+            logging.debug("ALL: " + buff)
+            
+            # get a full command from the buffer
+            command = buff
 
-        if -1 != buff.find('\n'):
-          # get a full command from the buffer
-          command = buff[0 : buff.find('\n')]
-          buff = buff[buff.find('\n')+1 : ]
+            # command's components after parsing
+            components = parser.parse_command(command)
+            to = send_to(command)
 
-          # command's components after parsing
-          components = parser.parse_command(command)
-          to = send_to(command)
+            ## check if the message is from another bot.
+            sender_is_bot = any(list(filter(lambda bot: fnmatch.fnmatch(components['sender'].lower(), bot), config.known_bots)))
+            if sender_is_bot:
+              continue
 
-          ## check if the message is from another bot.
-          sender_is_bot = any(list(filter(lambda bot: fnmatch.fnmatch(components['sender'].lower(), bot), config.known_bots)))
-          if sender_is_bot:
-            continue
+            if 'PING' == components['action']:
+              response = []
+              response.append('PONG')
+              response.append(':' + components['arguments'])
 
-          if 'PING' == components['action']:
-            response = []
-            response.append('PONG')
-            response.append(':' + components['arguments'])
+            elif 'PRIVMSG' == components['action']:
+              frst_arg = components['arguments'].strip().split(' ')[0].lower()
 
-          elif 'PRIVMSG' == components['action']:
-            frst_arg = components['arguments'].strip().split(' ')[0].lower()
-
-            ## we will accept either !<Command> as the first arg
-            ## or our name followed by the command. EGG: you can also use tambot
-            is_bot_prefix = any(
-                              list(
-                                filter(
-                                  lambda bot: fnmatch.fnmatch(frst_arg, bot), list(set(['tambot*', config.current_nick.lower() + '*']))
+              ## we will accept either !<Command> as the first arg
+              ## or our name followed by the command. EGG: you can also use tambot
+              is_bot_prefix = any(
+                                list(
+                                  filter(
+                                    lambda bot: fnmatch.fnmatch(frst_arg, bot), list(set(['tambot*', config.current_nick.lower() + '*']))
+                                  )
                                 )
                               )
-                            )
-            is_cmd_prefix = ('!' == frst_arg[0])
+              is_cmd_prefix = ('!' == frst_arg[0])
 
-            if (is_cmd_prefix or is_bot_prefix) and (not sender_is_bot):
+              if (is_cmd_prefix or is_bot_prefix) and (not sender_is_bot):
 
-              logging.debug(receive + \
-                ('' if '\n' == receive[len(receive)-1] else '\n'))
+                logging.debug("Processing bot cmd: " + buff)
 
-              ## if it has a bot prefix we need to remove that from the args and treat the remaining the same as 
-              ## we would if it was just a !<Command> sent to us
-              if is_bot_prefix:
-                components['arguments'] = components['arguments'].split(' ', 1)[1]
+                ## if it has a bot prefix we need to remove that from the args and treat the remaining the same as 
+                ## we would if it was just a !<Command> sent to us
+                if is_bot_prefix:
+                  components['arguments'] = components['arguments'].split(' ', 1)[1]
 
-              pos = components['arguments'].find(' ')
-              if -1 == pos:
-                pos = len(components['arguments'])
+                pos = components['arguments'].find(' ')
+                if -1 == pos:
+                  pos = len(components['arguments'])
 
-              # get the command issued to the bot without the "!"
-              # cmd = components['arguments'][1:pos]
-              cmd = components['arguments'].lstrip('!').split(' ')[0]
+                # get the command issued to the bot without the "!"
+                # cmd = components['arguments'][1:pos]
+                cmd = components['arguments'].lstrip('!').split(' ')[0]
 
-              callable_cmd = get_cmd(cmd, cmds['user'])
-              if callable_cmd:
-                run_cmd(socket, executor, to, callable_cmd, components)
-              else:
-                callable_cmd = get_cmd(cmd, cmds['core'])
-
+                callable_cmd = get_cmd(cmd, cmds['user'])
                 if callable_cmd:
-                  try:
-                    response = callable_cmd(socket, components)
-                  except Exception as e:
-                    response = err.C_EXCEPTION.format(
-                    callable_cmd.__name__)
-
-                    logging.error(str(e))
+                  run_cmd(socket, executor, to, callable_cmd, components)
                 else:
-                  ## bad command supplied
-                  response = "'{0}' is a bad command, try !help or {1} help".format(components['arguments'], config.current_nick)
+                  callable_cmd = get_cmd(cmd, cmds['core'])
 
-          elif 'INVITE' == components['action'] and \
-            nick == components['action_args'][0]:
-            ## we have been invited to another channel
-            cmd = 'join'
-            components['arguments'] = '!join ' + components['arguments']
+                  if callable_cmd:
+                    try:
+                      response = callable_cmd(socket, components)
+                    except Exception as e:
+                      response = err.C_EXCEPTION.format(
+                      callable_cmd.__name__)
 
-            callable_cmd = get_cmd(cmd, cmds['core'])
-            try:
-              response = callable_cmd(socket, components)
-            except Exception as e:
-              response = err.C_EXCEPTION.format(
-              callable_cmd.__name__)
+                      logging.error(str(e))
+                  else:
+                    ## bad command supplied
+                    response = "'{0}' is a bad command, try !help or {1} help".format(components['arguments'], config.current_nick)
 
-              logging.error(str(e))
+            elif 'INVITE' == components['action'] and \
+              nick == components['action_args'][0]:
+              ## we have been invited to another channel
+              cmd = 'join'
+              components['arguments'] = '!join ' + components['arguments']
 
-          elif 'KICK' == components['action'] and \
-            nick == components['action_args'][1]:
-              ch_nm = components['action_args'][0]
-              logging.info("Kicking bot from channel %s" % ch_nm)
-              channels.remove(ch_nm)
-              channel_manager.record_channel(ch_nm, is_active=False)
+              callable_cmd = get_cmd(cmd, cmds['core'])
+              try:
+                response = callable_cmd(socket, components)
+              except Exception as e:
+                response = err.C_EXCEPTION.format(
+                callable_cmd.__name__)
 
-          elif 'QUIT' == components['action'] and \
-                  -1 != components['arguments'].find('Ping timeout: '):
-            channels[:] = []
+                logging.error(str(e))
 
-          # this call is still necessary in case that a PONG response or a
-          # core command response should be sent, every other response is
-          # sent when the futures finish working from their respective
-          # thread
-          send_response(response, to, socket)
+            elif 'KICK' == components['action'] and \
+              nick == components['action_args'][1]:
+                ch_nm = components['action_args'][0]
+                logging.info("Kicking bot from channel %s" % ch_nm)
+                channels.remove(ch_nm)
+                channel_manager.record_channel(ch_nm, is_active=False)
 
-          buff = ''
+            elif 'QUIT' == components['action'] and \
+                    -1 != components['arguments'].find('Ping timeout: '):
+              channels[:] = []
+
+            # this call is still necessary in case that a PONG response or a
+            # core command response should be sent, every other response is
+            # sent when the futures finish working from their respective
+            # thread
+            send_response(response, to, socket)
+
+            buff = ''
 
 
 def main():
