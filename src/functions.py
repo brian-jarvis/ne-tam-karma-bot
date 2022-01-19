@@ -8,6 +8,7 @@ import select
 import logging
 import fnmatch
 from database import Database
+import time
 
 ## function to wrap irc messages in
 irc_fmt = lambda x: bytes(x, "UTF-8")
@@ -292,6 +293,7 @@ def send_response(response, destination, s):
       try:
           with send_response_lock:
               s.send(irc_fmt(response))
+              time.sleep(1)
       except IOError as e:
           logging.error('Unexpected error while sending the response: {0}\n'
               .format(e))

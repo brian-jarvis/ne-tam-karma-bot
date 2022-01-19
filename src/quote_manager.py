@@ -53,7 +53,11 @@ def format_print(quote):
   """ prints the quote based on the type """
   
   if quote.quoteType == 'nerd-excuse':
-    return ""
+    excuse_str = """
+    The cause of the problem is:
+    
+    {0}"""
+    return excuse_str.format(quote.quoteText, quote.quoteSource)
   else:
     quote_str = """
     {0}

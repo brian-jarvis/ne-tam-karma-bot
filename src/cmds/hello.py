@@ -6,7 +6,7 @@ import quote_manager
 def hello(components):
   '''Say hi back with a random quote.
   '''
-  sqt = quote_manager.get_random_quote(quote_type=['fame', 'nerd'])
+  sqt = quote_manager.get_random_quote(quote_type=['fame', 'nerd', 'nerd-excuse'])
   print(quote_manager.format_print(sqt))
   return cowsay.get_output_string('squirrel', quote_manager.format_print(sqt))
 
