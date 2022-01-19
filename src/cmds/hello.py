@@ -1,6 +1,7 @@
 import cowsay
 import requests
 import json
+import quote_manager
 
 def hello(components):
   '''Say hi back
@@ -9,6 +10,10 @@ def hello(components):
   quote_str = """
   {0}
     -- {1} {2}"""
+
+  sqt = quote_manager.get_random_quote(quote_type=['fame'])  #, 'nerd'])
+  print(quote_manager.format_print(sqt))
+  return cowsay.get_output_string('squirrel', quote_manager.format_print(sqt))
 
   req = requests.get('https://officeapi.dev/api/quotes/random')
   qt = json.loads(req.text).get('data')
