@@ -51,11 +51,13 @@ def get_random_quote(quote_type = ['fame','nerd']):
 
 def format_print(quote):
   """ prints the quote based on the type """
-  quote_str = """
-  {0}
-    -- {1}"""
   
-  if quote.quoteType == 'fame':
+  if quote.quoteType == 'nerd-excuse':
+    return ""
+  else:
+    quote_str = """
+    {0}
+      -- {1}"""
     return quote_str.format(quote.quoteText, quote.author)
 
   
