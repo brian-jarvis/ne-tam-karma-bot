@@ -1,3 +1,4 @@
+from pickle import UNICODE
 from functions import give_users_karma
 
 def friday(components):
@@ -8,14 +9,15 @@ def friday(components):
     'friyay',
     'Cora',
     'northeast',
-    'santa',
     'CSMs',
     'TAMs',
     'CSAs',
+    'CSEs',
     'weekend',
     'redhat',
     'coffee',
+    'snow',
   ]
   
   ## build the friday message
-  return give_users_karma(responseList)
+  return give_users_karma(responseList) + "\nHappy Birthday gangrif!!!   \U0001f389\U0001f382\U0001f389\U0001f973"
