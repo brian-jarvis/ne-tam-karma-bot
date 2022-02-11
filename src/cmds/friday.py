@@ -20,4 +20,6 @@ def friday(components):
   ]
   
   ## build the friday message
-  return give_users_karma(responseList) + "\nHappy Birthday gangrif!!!   \U0001f389\U0001f382\U0001f389\U0001f973"
+  return give_users_karma(responseList)
+  
+  ##  + "\nHappy Birthday gangrif!!!   \U0001f389\U0001f382\U0001f389\U0001f973"
