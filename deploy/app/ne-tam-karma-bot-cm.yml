@@ -71,6 +71,7 @@ objects:
         'chanserv', 
         'red*', 
         'stampy',
+        'robotnik',
       ]))
 
       # database details
