@@ -55,6 +55,7 @@ known_bots = list(set([
   'chanserv', 
   'red*', 
   'stampy',
+  'robotnik',
 ]))
 
 # database details
