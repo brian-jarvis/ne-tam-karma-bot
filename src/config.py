@@ -35,6 +35,7 @@ cmds = {
     'join',
     'channels',
     'give',
+    'weather',
   ])),
 
   # normal commands list, the ones that are accessible to any user
@@ -54,6 +55,7 @@ known_bots = list(set([
   'chanserv', 
   'red*', 
   'stampy',
+  'robotnik',
 ]))
 
 # database details

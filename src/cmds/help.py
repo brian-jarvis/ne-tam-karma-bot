@@ -18,6 +18,7 @@ Available Commands:
   yo - Because you da man!
   friday - Everyone loves Friday.  Show some love to the best day of the week (just don't tell Monday)
   give - Gives karma to every nic in the current channel
+  weather <location> [forcast_days] - Returns the current weather for the location specified.  Optional forecast_days accepts 1-3 days to get the future forecast for the location specified.
   
 KarmaBot can join other channels with IRC INVITE command.  
   '''

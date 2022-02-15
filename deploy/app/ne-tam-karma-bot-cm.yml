@@ -51,6 +51,7 @@ objects:
           'join',
           'channels',
           'give',
+          'weather',
         ])),
 
         # normal commands list, the ones that are accessible to any user
@@ -70,6 +71,7 @@ objects:
         'chanserv', 
         'red*', 
         'stampy',
+        'robotnik',
       ]))
 
       # database details
